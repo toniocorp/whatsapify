@@ -26,7 +26,7 @@ pnpm from-whatsapp
 pnpm from-file
 ```
 
-> [!INFO] 
+> [!NOTE] 
 > You need node to run this project, use the package manager of your taste
 
 ## Spotify authentication
@@ -34,7 +34,7 @@ pnpm from-file
 You need 
 - a Spotify account
 - a Spotify app: You can follow the [official guide](https://developer.spotify.com/documentation/web-api/tutorials/getting-started#create-an-app) to create an app and get your Spotify credentials from the dashboard.
-- a playlist id: Copy the share link of the spotify playlist, the ID is the segment that follows the "playlist" argument in the URL (e.g., https://open.spotify.com/playlist/**3JOifD0AGqnfwpyv6BN8mj**?si=71551b92cc95402d).
+- a playlist id: Copy the share link of the spotify playlist, the ID is the segment that follows the "playlist" argument in the URL (e.g., `https://open.spotify.com/playlist/3JOifD0AGqnfwpyv6BN8mj?si=71551b92cc95402d`).
 
 > [!TIP] 
 > The auth server is configured to use `http://localhost:3000` as redirect url, use the same value in your Spotify app
