@@ -1,32 +1,44 @@
-# Spotify Link Extractor
+# Spotify playlist updater
 
 ## Overview
-The Spotify Link Extractor is a simple JavaScript application that extracts track IDs from Spotify links found in a given text file.
+
+This project provides a node command-line tool to update your Spotify playlists with the content of a file or by searching a whatsapp channel.
 
 ## Features
-- Extracts Spotify track IDs from text data.
-- Supports both HTTP and HTTPS links.
-- Utilizes regular expressions for efficient extraction.
-- Only adds tracks that are not already in the playlist
 
-## Installation
+- Extracts Spotify track IDs from whatsapp channel
+- Extracts Spotify tracks from a text file
+- Checks existing playlist for duplicates, only new tracks are added
+
+## Quickstart
+
 ```bash
-git clone https://github.com/toniocorp/whatsapify.git
 pnpm i
+
+# Fill your spotify credentials in .env
+cp .env.template .env
+
+# Authenticate to spotify
+pnpm auth
+# Loads tracks from whatsapp channel search
+pnpm from-whatsapp
+# Loads tracks from data file
+pnpm from-file
 ```
 
-## Prerequisite
-You need a spotify account, a Spotify app and a playlist reday to receive the tracks.
-Refer to [this guide](https://developer.spotify.com/documentation/web-api/concepts/apps) to create the app and get your Spotify credentials (`client_id`, `client_secret` and `redirect_url`).
+> [!INFO] 
+> You need node to run this project, use the package manager of your taste
+
+## Spotify authentication
+
+You need 
+- a Spotify account
+- a Spotify app: You can follow the [official guide](https://developer.spotify.com/documentation/web-api/tutorials/getting-started#create-an-app) to create an app and get your Spotify credentials from the dashboard.
+- a playlist id: Copy the share link of the spotify playlist, the ID is the segment that follows the "playlist" argument in the URL (e.g., https://open.spotify.com/playlist/**3JOifD0AGqnfwpyv6BN8mj**?si=71551b92cc95402d).
 
 > [!TIP] 
-> The auth server is configured to use `http://localhost:3000` as redirect url, if you don't use that in your Spotify app, update accordingly
+> The auth server is configured to use `http://localhost:3000` as redirect url, use the same value in your Spotify app
 
-Get the playlist id by creating it in spotify UI and retrieve the share link, the id is the chain following the playlist arg (i.e. https://open.spotify.com/playlist/**3JOiQD0xGqncwpyv6BN8mj**?si=71444b92cc95402d)
+## Whatsapp authentication
 
-## Usage
-1. Create your `.env` file by running `cp .env.template .env`, fill it with your credentials
-2. Run `pnpm auth` and complete the spotify authentication
-3. Put all the text from which you want to get the tracks from in `data.txt`
-4. Run `pnpm upload`
-5. That's it, tracks should be available in your playlist 🎉
+When the script asks for authentication with a QR code, use the Whatsapp application on your phone to add a linked device. 

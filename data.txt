@@ -1,1 +1,2 @@
-# Dump the text containing the spotify links in this file
+# Extract the text with Spotify links from this file.
+# Each Spotify link should be listed on a separate line.

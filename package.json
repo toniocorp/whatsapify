@@ -4,8 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "auth": "node ./auth.mjs",
-    "upload": "node ./scripts.mjs"
+    "auth": "node ./src/auth.mjs",
+    "from-file": "node ./src/addFromFile.mjs",
+    "from-whatsapp": "node ./src/whatsapp.mjs"
   },
   "keywords": [],
   "author": "",
@@ -17,8 +18,9 @@
     "fs-extra": "^11.2.0",
     "open": "^10.1.0",
     "prettier": "^3.3.3",
-    "querystring": "^0.2.1",
-    "spotify-web-api-node": "^5.0.2"
+    "qrcode-terminal": "^0.12.0",
+    "spotify-web-api-node": "^5.0.2",
+    "whatsapp-web.js": "^1.26.0"
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",
