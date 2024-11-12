@@ -11,17 +11,16 @@ const client = new Client({
 
 client.once('ready', async () => {
   console.log('Scanning for spotify tracks');
-  const messages = await client.searchMessages(
-    'https://open.spotify.com/track/',
-    {
-      chatId: process.env.WHATSAPP_CHAT_ID,
-      limit: 1000,      
-    },
-  );
+  const messages = await client.searchMessages('https://open.spotify.com/', {
+    chatId: process.env.WHATSAPP_CHAT_ID,
+    limit: 1000,
+  });
   console.log(`Found ${messages.length} messages with spotify track links`);
   if (messages.length > 0) {
     const trackIds = messages.reduce((acc, message) => {
-      const match = message.body.match(/(?<=track\/)([a-zA-Z0-9]{22})/g);
+      const match =
+        message.body.match(/(?<=track\/)([a-zA-Z0-9]{22})/g) ||
+        message.body.match(/(?<=track\/)([a-zA-Z0-9]{22})(?=\?)/g);
       if (!match?.[0]) {
         return acc;
       }
