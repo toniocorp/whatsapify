@@ -18,14 +18,13 @@ client.once('ready', async () => {
   console.log(`Found ${messages.length} messages with spotify track links`);
   if (messages.length > 0) {
     const trackIds = messages.reduce((acc, message) => {
-      const match =
-        message.body.match(/(?<=track\/)([a-zA-Z0-9]{22})/g) ||
-        message.body.match(/(?<=track\/)([a-zA-Z0-9]{22})(?=\?)/g);
-      if (!match?.[0]) {
+      const match = /track\/([a-zA-Z0-9]{22})/g.exec(message.body)
+        
+      if (!match?.[1]) {
         return acc;
       }
 
-      return [...new Set(acc.concat(match))];
+      return [...new Set(acc.concat(match[1]))];
     }, []);
     console.log(`Found ${trackIds.length} tracks`);
     await addTracksToPlaylist(process.env.SPOTIFY_PLAYLIST_ID, trackIds);
