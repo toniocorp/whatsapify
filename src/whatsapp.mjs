@@ -10,26 +10,39 @@ const client = new Client({
 });
 
 client.once('ready', async () => {
-  console.log('Scanning for spotify tracks');
-  const messages = await client.searchMessages('https://open.spotify.com/', {
-    chatId: process.env.WHATSAPP_CHAT_ID,
-    limit: 1000,
-  });
-  console.log(`Found ${messages.length} messages with spotify track links`);
-  if (messages.length > 0) {
-    const trackIds = messages.reduce((acc, message) => {
-      const match = /track\/([a-zA-Z0-9]{22})/g.exec(message.body)
-        
-      if (!match?.[1]) {
-        return acc;
-      }
+  console.log('Scanning whatsapp chats');  
+  
+  const chat = await client.getChatById(process.env.WHATSAPP_CHAT_ID);
 
-      return [...new Set(acc.concat(match[1]))];
-    }, []);
-    console.log(`Found ${trackIds.length} tracks`);
-    await addTracksToPlaylist(process.env.SPOTIFY_PLAYLIST_ID, trackIds);
+  if (!chat) {
+    console.log(`Chat ${process.env.WHATSAPP_CHAT_ID} not found`);
     process.exit(0);
   }
+
+  console.log(`Fetching messages from chat ${chat.name}`);
+  
+  const messages = await chat.fetchMessages({ limit: 1000 });
+
+  if (!messages.length) {
+    console.log('No messages found');
+    process.exit(0);
+  }
+
+  console.log(`Found ${messages.length} messages in chat`);
+
+  const trackIds = messages.reduce((acc, message) => {
+    const match = /track\/([a-zA-Z0-9]{22})/g.exec(message.body);
+
+    if (!match?.[1]) {
+      return acc;
+    }
+
+    return [...new Set(acc.concat(match[1]))];
+  }, []);
+
+  console.log(`Found ${trackIds.length} unique track ids`);
+  await addTracksToPlaylist(process.env.SPOTIFY_PLAYLIST_ID, trackIds);
+  process.exit(0);
 });
 
 client.on('qr', (qr) => {
