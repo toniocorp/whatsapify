@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import fse from 'fs-extra';
 import SpotifyWebApi from 'spotify-web-api-node';
+import { spotifyTrackIdRegex } from './utils.mjs';
 
 const BATCH_SIZE = 100;
 
@@ -16,7 +17,8 @@ export async function extractSpotifyTracksFromFile(filePath) {
   console.log(`Start extracting trackIds from ${filePath}`);
 
   const data = await fse.readFile(filePath, 'utf-8');
-  const spotifyTrackIDs = data.match(/(?<=track\/)([a-zA-Z0-9]{22})/g) || [];
+  const spotifyTrackIDs = data.match(spotifyTrackIdRegex);
+
   const spotifyTrackURIs = [...new Set(spotifyTrackIDs)];
 
   console.log(`Found ${spotifyTrackURIs.length} trackIds`);
@@ -50,10 +52,7 @@ export async function getPlaylistTrackIds(playlistId) {
 export async function addTracksToSpotify(playlistId, trackUris) {
   console.log(`Adding ${trackUris.length} tracks to playlist ${playlistId}`);
   try {
-    await client.addTracksToPlaylist(
-      playlistId,
-      trackUris,
-    );
+    await client.addTracksToPlaylist(playlistId, trackUris);
     console.log(`Added ${trackUris.length} tracks to the playlist.`);
   } catch (error) {
     console.error(

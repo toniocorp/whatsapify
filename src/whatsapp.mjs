@@ -2,6 +2,7 @@ import 'dotenv/config';
 import whatsapp from 'whatsapp-web.js';
 import qrcode from 'qrcode-terminal';
 import { addTracksToPlaylist } from './services.mjs';
+import { spotifyTrackIdRegex } from './utils.mjs';
 
 const { Client, LocalAuth } = whatsapp;
 
@@ -10,8 +11,8 @@ const client = new Client({
 });
 
 client.once('ready', async () => {
-  console.log('Scanning whatsapp chats');  
-  
+  console.log('Scanning whatsapp chats');
+
   const chat = await client.getChatById(process.env.WHATSAPP_CHAT_ID);
 
   if (!chat) {
@@ -20,7 +21,7 @@ client.once('ready', async () => {
   }
 
   console.log(`Fetching messages from chat ${chat.name}`);
-  
+
   const messages = await chat.fetchMessages({ limit: 1000 });
 
   if (!messages.length) {
@@ -31,7 +32,7 @@ client.once('ready', async () => {
   console.log(`Found ${messages.length} messages in chat`);
 
   const trackIds = messages.reduce((acc, message) => {
-    const match = /track\/([a-zA-Z0-9]{22})/g.exec(message.body);
+    const match = spotifyTrackIdRegex.exec(message.body);
 
     if (!match?.[1]) {
       return acc;
