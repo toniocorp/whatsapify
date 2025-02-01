@@ -2,28 +2,33 @@
   "name": "whatsapify",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/cli.mjs",
+  "bin": {
+    "whatsapify": "./src/cli.mjs"
+  },
   "scripts": {
-    "auth": "node ./src/auth.mjs",
-    "from-file": "node ./src/addFromFile.mjs",
-    "from-whatsapp": "node ./src/whatsapp.mjs"
+    "start": "node ./src/cli.mjs",
+    "auth": "node ./src/auth.mjs"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "axios": "^1.7.8",
-    "dotenv": "^16.4.5",
-    "express": "^4.21.1",
-    "fs-extra": "^11.2.0",
+    "axios": "^1.7.9",
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "fs-extra": "^11.3.0",
+    "inquirer": "^9.3.7",
     "open": "^10.1.0",
-    "prettier": "^3.4.1",
+    "ora": "^8.1.1",
+    "prettier": "^3.4.2",
     "qrcode-terminal": "^0.12.0",
     "spotify-web-api-node": "^5.0.2",
     "whatsapp-web.js": "^1.26.0"
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",
-    "@types/node": "^22.10.1"
+    "@types/node": "^22.13.0"
   }
 }
