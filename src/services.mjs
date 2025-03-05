@@ -17,9 +17,11 @@ export async function extractSpotifyTracksFromFile(filePath) {
   console.log(`Start extracting trackIds from ${filePath}`);
 
   const data = await fse.readFile(filePath, 'utf-8');
-  const spotifyTrackIDs = data.match(spotifyTrackIdRegex);
+  const spotifyTrackIDs = data.matchAll(spotifyTrackIdRegex);
 
-  const spotifyTrackURIs = [...new Set(spotifyTrackIDs)];
+  const spotifyTrackURIs = [...new Set(spotifyTrackIDs)].map(
+    (match) => match[1],
+  );
 
   console.log(`Found ${spotifyTrackURIs.length} trackIds`);
 

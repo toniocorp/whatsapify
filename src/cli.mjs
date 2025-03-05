@@ -549,6 +549,7 @@ async function handleFile() {
         type: 'input',
         name: 'file',
         message: 'Enter the path to the file containing Spotify track URLs:',
+        default: process.env.DATA_FILE || undefined,
         validate: async (input) => {
           if (!input) return 'File path is required';
           try {

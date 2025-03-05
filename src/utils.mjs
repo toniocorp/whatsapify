@@ -1,2 +1,1 @@
-export const spotifyTrackIdRegex =
-  /track-id=([a-zA-Z0-9]{22})|track\/([a-zA-Z0-9]{22})/g;
+export const spotifyTrackIdRegex = /(?:track\/|track-id=)([0-9A-Za-z]{22})/g;
