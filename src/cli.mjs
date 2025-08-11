@@ -3,7 +3,11 @@
 import { Command } from 'commander';
 import inquirer from 'inquirer';
 import 'dotenv/config';
-import { addTracksToPlaylist, extractSpotifyTracksFromFile } from './services.mjs';
+import {
+  addTracksToPlaylist,
+  extractSpotifyTracksFromFile,
+} from './services.mjs';
+import { ContributionParser } from './parse_contributions.mjs';
 import whatsapp from 'whatsapp-web.js';
 import qrcode from 'qrcode-terminal';
 import { spotifyTrackIdRegex } from './utils.mjs';
@@ -21,7 +25,9 @@ const program = new Command();
 
 program
   .name('whatsapify')
-  .description('CLI to add Spotify tracks to a playlist from WhatsApp messages or text files')
+  .description(
+    'CLI to add Spotify tracks to a playlist from WhatsApp messages or text files',
+  )
   .version('1.0.0')
   .action(async () => {
     await startWizard();
@@ -40,9 +46,13 @@ async function startWizard() {
             { name: 'Select WhatsApp chat', value: 'select-chat' },
             { name: 'Import tracks from WhatsApp', value: 'from-whatsapp' },
             { name: 'Import tracks from file', value: 'from-file' },
-            { name: 'Exit', value: 'exit' }
-          ]
-        }
+            {
+              name: 'Analyze user contributions',
+              value: 'analyze-contributions',
+            },
+            { name: 'Exit', value: 'exit' },
+          ],
+        },
       ]);
 
       if (action === 'exit') {
@@ -64,6 +74,9 @@ async function startWizard() {
           case 'from-file':
             await handleFile();
             break;
+          case 'analyze-contributions':
+            await handleAnalyzeContributions();
+            break;
         }
       } catch (error) {
         console.error('\n❌ Error:', error.message);
@@ -72,8 +85,8 @@ async function startWizard() {
             type: 'confirm',
             name: 'retry',
             message: 'Would you like to try again?',
-            default: true
-          }
+            default: true,
+          },
         ]);
         if (!retry) {
           continue;
@@ -91,6 +104,9 @@ async function startWizard() {
             break;
           case 'from-file':
             await handleFile();
+            break;
+          case 'analyze-contributions':
+            await handleAnalyzeContributions();
             break;
         }
       }
@@ -133,19 +149,23 @@ async function reloadEnv() {
 async function handleAuth() {
   return new Promise((resolve, reject) => {
     const spinner = ora('Starting Spotify authentication...').start();
-    
+
     const envFilePath = '.env';
-    const scope = 'playlist-modify-public playlist-modify-private playlist-read-private';
-    
+    const scope =
+      'playlist-modify-public playlist-modify-private playlist-read-private';
+
     const app = express();
     let server;
-    
+
     app.get('/login', function (req, res) {
       function generateRandomString(length) {
         let result = '';
-        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        const characters =
+          'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         for (var i = 0; i < length; i++) {
-          result += characters.charAt(Math.floor(Math.random() * characters.length));
+          result += characters.charAt(
+            Math.floor(Math.random() * characters.length),
+          );
         }
         return result;
       }
@@ -161,10 +181,10 @@ async function handleAuth() {
           }).toString(),
       );
     });
-    
+
     app.get('/', async function (req, res) {
       const code = req.query.code;
-    
+
       if (!code) {
         spinner.fail('Missing authorization code');
         res.status(500).send('Missing code for access token');
@@ -172,7 +192,7 @@ async function handleAuth() {
         reject(new Error('Missing code for access token'));
         return;
       }
-    
+
       let accessToken;
       try {
         spinner.text = 'Exchanging authorization code for access token...';
@@ -191,7 +211,7 @@ async function handleAuth() {
             },
           },
         );
-    
+
         accessToken = response.data.access_token;
       } catch (error) {
         spinner.fail('Failed to exchange code for access token');
@@ -201,14 +221,17 @@ async function handleAuth() {
         reject(error);
         return;
       }
-    
+
       const newEnvContent = `SPOTIFY_ACCESS_TOKEN=${accessToken}`;
-    
+
       try {
         spinner.text = 'Saving access token...';
         const data = fse.readFileSync(envFilePath, 'utf8');
         if (data.includes('SPOTIFY_ACCESS_TOKEN=')) {
-          const updatedData = data.replace(/SPOTIFY_ACCESS_TOKEN=.*/g, newEnvContent);
+          const updatedData = data.replace(
+            /SPOTIFY_ACCESS_TOKEN=.*/g,
+            newEnvContent,
+          );
           fse.outputFileSync(envFilePath, updatedData);
         } else {
           fse.appendFileSync(envFilePath, `\n${newEnvContent}`);
@@ -221,7 +244,7 @@ async function handleAuth() {
         reject(err);
         return;
       }
-    
+
       res.send(`
         <html>
           <body style="font-family: arial; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 50vh;">
@@ -233,13 +256,13 @@ async function handleAuth() {
         </html>
       `);
       res.end();
-    
+
       server.close(() => {
         spinner.succeed('Authentication completed successfully! ✨\n');
         resolve();
       });
     });
-    
+
     server = app.listen(3000, async () => {
       spinner.text = 'Opening browser for authentication...';
       await open('http://localhost:3000/login');
@@ -257,7 +280,7 @@ async function handleAuth() {
 async function handleChatSelection() {
   return new Promise(async (resolve, reject) => {
     const spinner = ora('Initializing WhatsApp client...').start();
-    
+
     try {
       const client = new Client({
         authStrategy: new LocalAuth(),
@@ -285,9 +308,9 @@ async function handleChatSelection() {
           });
 
           // Create choices with chat details
-          const choices = sortedChats.map(chat => ({
+          const choices = sortedChats.map((chat) => ({
             name: `${chat.name || chat.id.user} ${chat.isGroup ? '(Group)' : '(Contact)'} - ID: ${chat.id.user}`,
-            value: chat.id._serialized
+            value: chat.id._serialized,
           }));
 
           const { selectedChat } = await inquirer.prompt([
@@ -297,12 +320,12 @@ async function handleChatSelection() {
               message: 'Select a chat:',
               choices: [
                 new inquirer.Separator('Groups'),
-                ...choices.filter(c => c.name.includes('(Group)')),
+                ...choices.filter((c) => c.name.includes('(Group)')),
                 new inquirer.Separator('Contacts'),
-                ...choices.filter(c => c.name.includes('(Contact)'))
+                ...choices.filter((c) => c.name.includes('(Contact)')),
               ],
-              pageSize: 20
-            }
+              pageSize: 20,
+            },
           ]);
 
           // Copy to clipboard if possible
@@ -318,9 +341,10 @@ async function handleChatSelection() {
             {
               type: 'confirm',
               name: 'saveToEnv',
-              message: 'Would you like to save this chat ID as default in .env?',
-              default: true
-            }
+              message:
+                'Would you like to save this chat ID as default in .env?',
+              default: true,
+            },
           ]);
 
           if (saveToEnv) {
@@ -330,7 +354,10 @@ async function handleChatSelection() {
             try {
               const data = await fse.readFile(envFilePath, 'utf8');
               if (data.includes('WHATSAPP_CHAT_ID=')) {
-                const updatedData = data.replace(/WHATSAPP_CHAT_ID=.*/g, newEnvContent);
+                const updatedData = data.replace(
+                  /WHATSAPP_CHAT_ID=.*/g,
+                  newEnvContent,
+                );
                 await fse.outputFile(envFilePath, updatedData);
               } else {
                 await fse.appendFile(envFilePath, `\n${newEnvContent}`);
@@ -385,40 +412,42 @@ async function handleWhatsApp() {
     try {
       // Reload env variables to ensure we have the latest values
       await reloadEnv();
-      
+
       const answers = await inquirer.prompt([
         {
           type: 'input',
           name: 'chatId',
           message: 'Enter the WhatsApp chat ID:',
           default: process.env.WHATSAPP_CHAT_ID || undefined,
-          validate: validateWhatsAppChatId
+          validate: validateWhatsAppChatId,
         },
         {
           type: 'input',
           name: 'playlistId',
           message: 'Enter the Spotify playlist ID:',
           default: process.env.SPOTIFY_PLAYLIST_ID || undefined,
-          validate: validateSpotifyPlaylistId
+          validate: validateSpotifyPlaylistId,
         },
         {
           type: 'confirm',
           name: 'fetchAll',
-          message: 'Do you want to fetch all messages? (This might take a while)',
-          default: true
+          message:
+            'Do you want to fetch all messages? (This might take a while)',
+          default: true,
         },
         {
           type: 'number',
           name: 'limit',
           message: 'How many messages to scan?',
           default: 1000,
-          validate: value => value > 0 ? true : 'Please enter a number greater than 0',
-          when: answers => !answers.fetchAll
-        }
+          validate: (value) =>
+            value > 0 ? true : 'Please enter a number greater than 0',
+          when: (answers) => !answers.fetchAll,
+        },
       ]);
 
       spinner.start('Initializing WhatsApp client...');
-      
+
       const client = new Client({
         authStrategy: new LocalAuth(),
       });
@@ -444,13 +473,13 @@ async function handleWhatsApp() {
           try {
             while (hasMore) {
               spinner.text = `Loading messages from chat ${chat.name} (page ${currentPage})`;
-              
+
               const messages = await client.searchMessages('spotify', {
                 page: currentPage,
                 limit: MESSAGES_PER_PAGE,
-                chatId: answers.chatId
+                chatId: answers.chatId,
               });
-              
+
               if (!messages || messages.length === 0) {
                 spinner.info('No more messages to load');
                 break;
@@ -465,10 +494,12 @@ async function handleWhatsApp() {
 
               currentPage++;
               // Add a small delay to avoid rate limiting
-              await new Promise(resolve => setTimeout(resolve, 500));
+              await new Promise((resolve) => setTimeout(resolve, 500));
             }
 
-            spinner.succeed(`Finished loading messages (total: ${allMessages.length} messages)`);
+            spinner.succeed(
+              `Finished loading messages (total: ${allMessages.length} messages)`,
+            );
 
             if (!allMessages.length) {
               spinner.info('No messages found');
@@ -499,7 +530,9 @@ async function handleWhatsApp() {
             spinner.text = `Adding ${trackIds.length} tracks to playlist...`;
             await addTracksToPlaylist(answers.playlistId, trackIds);
             await client.destroy();
-            spinner.succeed(`WhatsApp import completed successfully! ✨\nProcessed ${allMessages.length} messages and found ${trackIds.length} unique tracks.\n`);
+            spinner.succeed(
+              `WhatsApp import completed successfully! ✨\nProcessed ${allMessages.length} messages and found ${trackIds.length} unique tracks.\n`,
+            );
             resolve();
           } catch (error) {
             spinner.fail('Error during WhatsApp import');
@@ -558,15 +591,15 @@ async function handleFile() {
           } catch {
             return 'File does not exist or is not accessible';
           }
-        }
+        },
       },
       {
         type: 'input',
         name: 'playlistId',
         message: 'Enter the Spotify playlist ID:',
         default: process.env.SPOTIFY_PLAYLIST_ID || undefined,
-        validate: validateSpotifyPlaylistId
-      }
+        validate: validateSpotifyPlaylistId,
+      },
     ]);
 
     spinner.start(`Scanning ${answers.file} for track IDs...`);
@@ -586,4 +619,67 @@ async function handleFile() {
   }
 }
 
-program.parse(); 
+async function handleAnalyzeContributions() {
+  const spinner = ora();
+  try {
+    const answers = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'file',
+        message: 'Enter the path to the WhatsApp chat export file:',
+        default: process.env.DATA_FILE || 'data.txt',
+        validate: async (input) => {
+          if (!input) return 'File path is required';
+          try {
+            await fse.access(input);
+            return true;
+          } catch {
+            return 'File does not exist or is not accessible';
+          }
+        },
+      },
+    ]);
+
+    spinner.start(`Analyzing user contributions from ${answers.file}...`);
+
+    const parser = new ContributionParser();
+    parser.parseFile(answers.file);
+
+    spinner.succeed('User contribution analysis completed successfully! ✨\n');
+
+    // Ask if user wants to save the file path
+    const { saveToEnv } = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'saveToEnv',
+        message: 'Would you like to save this file path as default in .env?',
+        default: true,
+      },
+    ]);
+
+    if (saveToEnv) {
+      const envFilePath = '.env';
+      const newEnvContent = `DATA_FILE=${answers.file}`;
+
+      try {
+        const data = await fse.readFile(envFilePath, 'utf8');
+        if (data.includes('DATA_FILE=')) {
+          const updatedData = data.replace(/DATA_FILE=.*/g, newEnvContent);
+          await fse.outputFile(envFilePath, updatedData);
+        } else {
+          await fse.appendFile(envFilePath, `\n${newEnvContent}`);
+        }
+        // Reload environment variables after saving
+        await reloadEnv();
+        console.log('✅ File path saved as default in .env file');
+      } catch (err) {
+        console.error('❌ Error saving to .env:', err.message);
+      }
+    }
+  } catch (error) {
+    spinner.fail('Error during contribution analysis');
+    throw error;
+  }
+}
+
+program.parse();
